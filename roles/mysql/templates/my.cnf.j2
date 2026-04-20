@@ -1,0 +1,19 @@
+[mysqld]
+# Basic settings
+user = mysql
+datadir = /var/lib/mysql
+socket = /var/lib/mysql/mysql.sock
+
+# Optimized settings based on server memory specs
+innodb_buffer_pool_size = {{ mysql_config_tiers[server_memory_size].innodb_buffer_pool_size }}
+max_connections = {{ mysql_config_tiers[server_memory_size].max_connections }}
+innodb_log_file_size = {{ mysql_config_tiers[server_memory_size].innodb_log_file_size }}
+key_buffer_size = {{ mysql_config_tiers[server_memory_size].key_buffer_size }}
+
+# Character set
+character-set-server = utf8mb4
+collation-server = utf8mb4_unicode_ci
+
+[client]
+default-character-set = utf8mb4
+socket = /var/lib/mysql/mysql.sock

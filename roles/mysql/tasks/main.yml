@@ -1,0 +1,71 @@
+---
+# ============================================================
+# 1. MySQL および必要なライブラリのインストール
+# ============================================================
+- name: MySQLサーバーとAnsible用Pythonライブラリをインストールする
+  dnf:
+    name:
+      - mysql-server
+      - python3-PyMySQL
+    state: present
+
+# ============================================================
+# 2. 全体設定ファイル (my.cnf) の適用
+# ============================================================
+- name: サーバースペック(メモリ)に最適化された全体設定ファイルを適用する
+  template:
+    src: my.cnf.j2
+    dest: /etc/my.cnf.d/mysql-server.cnf
+  notify: restart mysql
+
+# ============================================================
+# 3. サービスの起動（初期設定のため）
+# ============================================================
+- name: MySQLサービスを起動し、次回OS起動時にも自動起動するように有効化する
+  systemd:
+    name: mysqld
+    state: started
+    enabled: yes
+
+- name: ここまでの設定変更に伴う 再起動ハンドラー を今すぐ強制的に実行する
+  meta: flush_handlers
+
+# ============================================================
+# 4. MySQL初期セキュリティ設定とデータベース構築
+# ============================================================
+- name: MySQLのrootパスワードを設定する
+  community.mysql.mysql_user:
+    name: root
+    host: localhost
+    password: "{{ mysql_root_password }}"
+    login_user: root
+    login_password: "{{ mysql_root_password }}"
+    check_implicit_admin: yes
+    state: present
+
+- name: アプリケーション用のデータベースを作成する
+  community.mysql.mysql_db:
+    name: "{{ mysql_app_database }}"
+    state: present
+    login_user: root
+    login_password: "{{ mysql_root_password }}"
+
+- name: アプリケーション用ユーザーを作成し、すべてのDBに対する権限を付与する
+  community.mysql.mysql_user:
+    name: "{{ mysql_app_user }}"
+    password: "{{ mysql_app_password }}"
+    priv: "*.*:ALL"
+    host: "localhost"
+    state: present
+    login_user: root
+    login_password: "{{ mysql_root_password }}"
+
+- name: メンテナンス用ユーザーを作成し、すべてのDBに対する権限を付与する
+  community.mysql.mysql_user:
+    name: "{{ mysql_maintainer_user }}"
+    password: "{{ mysql_maintainer_password }}"
+    priv: "*.*:ALL"
+    host: "localhost"
+    state: present
+    login_user: root
+    login_password: "{{ mysql_root_password }}"
