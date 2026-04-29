@@ -6,10 +6,6 @@
   dnf:
     update_cache: yes
 
-- name: MySQLモジュールを有効化する (RHEL/Alma/Rocky 8/9向け)
-  dnf:
-    name: '@mysql:8.0'
-    state: present
 
 - name: MySQLサーバーとAnsible用Pythonライブラリをインストールする
   dnf:
