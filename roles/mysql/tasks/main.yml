@@ -6,12 +6,19 @@
   dnf:
     update_cache: yes
 
+- name: MySQL公式リポジトリのRPMファイルをダウンロードする (AlmaLinux 10向け)
+  get_url:
+    url: "https://dev.mysql.com/get/mysql84-community-release-el10-2.noarch.rpm"
+    dest: /tmp/mysql84-community-release-el10-2.noarch.rpm
+  when: ansible_distribution_major_version | int == 10
+
 - name: MySQL公式リポジトリを追加する (AlmaLinux 10向け)
   dnf:
-    name: "https://dev.mysql.com/get/mysql84-community-release-el10-2.noarch.rpm"
+    name: "/tmp/mysql84-community-release-el10-2.noarch.rpm"
     state: present
     disable_gpg_check: yes
   when: ansible_distribution_major_version | int == 10
+
 
 - name: MySQLサーバーとAnsible用Pythonライブラリをインストールする (AlmaLinux 10向け)
   dnf:
