@@ -2,32 +2,14 @@
 # ============================================================
 # 1. MySQL および必要なライブラリのインストール
 # ============================================================
+- name: MySQL公式リポジトリ設定を削除する
+  file:
+    path: /etc/yum.repos.d/mysql-community.repo
+    state: absent
+
 - name: DNFのキャッシュを更新する
   dnf:
     update_cache: yes
-
-- name: MySQL公式リポジトリの設定ファイルを配置する (AlmaLinux 10向け)
-  copy:
-    dest: /etc/yum.repos.d/mysql-community.repo
-    content: |
-      [mysql-8.4-community]
-      name=MySQL 8.4 Community Server
-      baseurl=https://repo.mysql.com/yum/mysql-8.4-community/el/10/$basearch/
-      enabled=1
-      gpgcheck=0
-
-      [mysql-connectors-community]
-      name=MySQL Connectors Community
-      baseurl=https://repo.mysql.com/yum/mysql-connectors-community/el/10/$basearch/
-      enabled=1
-      gpgcheck=0
-
-      [mysql-tools-community]
-      name=MySQL Tools Community
-      baseurl=https://repo.mysql.com/yum/mysql-tools-community/el/10/$basearch/
-      enabled=1
-      gpgcheck=0
-  when: ansible_distribution_major_version | int == 10
 
 
 
