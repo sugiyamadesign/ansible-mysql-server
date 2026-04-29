@@ -44,11 +44,12 @@ fi
 # 4. AlmaLinux 10 向け MySQL パッケージの事前インストール
 # ==============================================================================
 if [ -f /etc/os-release ] && grep -q "VERSION_ID=\"10\"" /etc/os-release; then
-    echo "AlmaLinux 10 を検知しました。MySQL公式リポジトリとパッケージを事前にインストールします..."
+    echo "AlmaLinux 10 を検知しました。MySQL 9 (Innovation) 公式リポジトリとパッケージを事前にインストールします..."
     dnf install -y https://dev.mysql.com/get/mysql84-community-release-el10-2.noarch.rpm
     dnf repolist | grep mysql
-    dnf install -y mysql-community-server mysql-community-client python3-PyMySQL
+    dnf install -y --disablerepo="mysql-8.4-lts-community" --enablerepo="mysql-innovation-community" mysql-community-server mysql-community-client python3-PyMySQL
 fi
+
 
 # ==============================================================================
 # 5. Ansible Playbook の実行
