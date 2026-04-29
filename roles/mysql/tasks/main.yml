@@ -49,11 +49,23 @@
 - name: ここまでの設定変更に伴う 再起動ハンドラー を今すぐ強制的に実行する
   meta: flush_handlers
 
+- name: 現在のrootパスワードでログインできるか確認する
+  command: >
+    mysql
+    -uroot
+    -p'{{ mysql_root_password }}'
+    -e "SELECT 1;"
+  register: mysql_root_login_check
+  changed_when: false
+  failed_when: false
+  no_log: true
+
 - name: MySQL rootの一時パスワードを取得する
   shell: "grep 'temporary password' /var/log/mysqld.log | awk '{print $NF}' | tail -n 1"
   register: mysql_temp_password
   changed_when: false
-  failed_when: mysql_temp_password.stdout == ""
+  failed_when: false
+  when: mysql_root_login_check.rc != 0
 
 - name: MySQLのrootパスワードを初期パスワードから変更する
   command: >
@@ -61,21 +73,16 @@
     -uroot
     -p'{{ mysql_temp_password.stdout }}'
     -e "ALTER USER 'root'@'localhost' IDENTIFIED BY '{{ mysql_root_password }}';"
+  when:
+    - mysql_root_login_check.rc != 0
+    - mysql_temp_password.stdout is defined
+    - mysql_temp_password.stdout != ""
   no_log: true
 
 # ============================================================
 # 4. MySQL初期セキュリティ設定とデータベース構築
 # ============================================================
-- name: MySQLのrootパスワードを設定する
-  community.mysql.mysql_user:
-    name: root
-    host: localhost
-    password: "{{ mysql_root_password }}"
-    plugin: caching_sha2_password
-    login_user: root
-    login_password: "{{ mysql_root_password }}"
-    check_implicit_admin: yes
-    state: present
+
 
 - name: アプリケーション用のデータベースを作成する
   community.mysql.mysql_db:
@@ -83,25 +90,38 @@
     state: present
     login_user: root
     login_password: "{{ mysql_root_password }}"
+    login_unix_socket: /var/lib/mysql/mysql.sock
 
-- name: アプリケーション用ユーザーを作成し、すべてのDBに対する権限を付与する
-  community.mysql.mysql_user:
-    name: "{{ mysql_app_user }}"
-    password: "{{ mysql_app_password }}"
-    plugin: caching_sha2_password
-    priv: "*.*:ALL"
-    host: "localhost"
-    state: present
+- name: アプリケーション用ユーザーを外部接続用に作成する
+  community.mysql.mysql_query:
     login_user: root
     login_password: "{{ mysql_root_password }}"
+    login_unix_socket: /var/lib/mysql/mysql.sock
+    query: >
+      CREATE USER IF NOT EXISTS '{{ mysql_app_user }}'@'%'
+      IDENTIFIED BY '{{ mysql_app_password }}';
 
-- name: メンテナンス用ユーザーを作成し、すべてのDBに対する権限を付与する
-  community.mysql.mysql_user:
-    name: "{{ mysql_maintainer_user }}"
-    password: "{{ mysql_maintainer_password }}"
-    plugin: caching_sha2_password
-    priv: "*.*:ALL"
-    host: "localhost"
-    state: present
+- name: アプリケーション用ユーザーにDB権限を付与する
+  community.mysql.mysql_query:
     login_user: root
     login_password: "{{ mysql_root_password }}"
+    login_unix_socket: /var/lib/mysql/mysql.sock
+    query: >
+      GRANT ALL PRIVILEGES ON {{ mysql_app_database }}.* TO '{{ mysql_app_user }}'@'%';
+
+- name: メンテナンス用ユーザーを外部接続用に作成する
+  community.mysql.mysql_query:
+    login_user: root
+    login_password: "{{ mysql_root_password }}"
+    login_unix_socket: /var/lib/mysql/mysql.sock
+    query: >
+      CREATE USER IF NOT EXISTS '{{ mysql_maintainer_user }}'@'%'
+      IDENTIFIED BY '{{ mysql_maintainer_password }}';
+
+- name: メンテナンス用ユーザーにDB権限を付与する
+  community.mysql.mysql_query:
+    login_user: root
+    login_password: "{{ mysql_root_password }}"
+    login_unix_socket: /var/lib/mysql/mysql.sock
+    query: >
+      GRANT ALL PRIVILEGES ON {{ mysql_app_database }}.* TO '{{ mysql_maintainer_user }}'@'%';
