@@ -6,13 +6,29 @@
   dnf:
     update_cache: yes
 
+- name: MySQL公式リポジトリを追加する (AlmaLinux 10向け)
+  dnf:
+    name: "https://dev.mysql.com/get/mysql84-community-release-el10-2.noarch.rpm"
+    state: present
+    disable_gpg_check: yes
+  when: ansible_distribution_major_version | int == 10
 
-- name: MySQLサーバーとAnsible用Pythonライブラリをインストールする
+- name: MySQLサーバーとAnsible用Pythonライブラリをインストールする (AlmaLinux 10向け)
+  dnf:
+    name:
+      - mysql-community-server
+      - python3-PyMySQL
+    state: present
+  when: ansible_distribution_major_version | int == 10
+
+- name: MySQLサーバーとAnsible用Pythonライブラリをインストールする (AlmaLinux 8/9向け)
   dnf:
     name:
       - mysql-server
       - python3-PyMySQL
     state: present
+  when: ansible_distribution_major_version | int <= 9
+
 
 # ============================================================
 # 2. 全体設定ファイル (my.cnf) の適用
