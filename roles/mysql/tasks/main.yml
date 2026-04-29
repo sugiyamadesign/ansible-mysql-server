@@ -10,21 +10,21 @@
   copy:
     dest: /etc/yum.repos.d/mysql-community.repo
     content: |
-      [mysql-8.4-lts-community]
-      name=MySQL 8.4 LTS Community Server
-      baseurl=http://repo.mysql.com/yum/mysql-8.4-lts-community/el/10/$basearch/
+      [mysql-8.4-community]
+      name=MySQL 8.4 Community Server
+      baseurl=https://repo.mysql.com/yum/mysql-8.4-community/el/10/$basearch/
       enabled=1
       gpgcheck=0
 
       [mysql-connectors-community]
       name=MySQL Connectors Community
-      baseurl=http://repo.mysql.com/yum/mysql-connectors-community/el/10/$basearch/
+      baseurl=https://repo.mysql.com/yum/mysql-connectors-community/el/10/$basearch/
       enabled=1
       gpgcheck=0
 
       [mysql-tools-community]
       name=MySQL Tools Community
-      baseurl=http://repo.mysql.com/yum/mysql-tools-community/el/10/$basearch/
+      baseurl=https://repo.mysql.com/yum/mysql-tools-community/el/10/$basearch/
       enabled=1
       gpgcheck=0
   when: ansible_distribution_major_version | int == 10
